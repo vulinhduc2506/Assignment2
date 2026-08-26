@@ -51,3 +51,19 @@ JC-10:
 JC-11:
 - 201 Created là chuẩn RESTful để báo hiệu tài nguyên (ở đây là phiếu mượn mới hoặc sách mới) đã được tạo thành công.
 - Khi mượn sách đã hết, request có định dạng hợp lệ nhưng không thể thực hiện do xung đột với trạng thái nghiệp vụ, nên dùng 409 Conflict là phản ánh chính xác nhất.
+
+SQL
+
+SQL-01: 
+- PRIMARY KEY đảm bảo mỗi bản ghi là duy nhất và định danh được.
+- FOREIGN KEY bảo vệ tính toàn vẹn tham chiếu (VD: Phiếu mượn chỉ được gắn với reader_id và book_id có thật).
+- UNIQUE ngăn cấm việc lặp lại dữ liệu (VD: code sách không được trùng).
+- NOT NULL cấm bỏ trống cột.
+- CHECK kiểm tra các quy tắc vật lý như số lượng sách available_copies >= 0.
+
+SQL-02: 
+- INNER JOIN chỉ trả về bản ghi nếu cả 2 bảng đều có dữ liệu khớp nhau. 
+- LEFT JOIN trả về toàn bộ dữ liệu ở bảng trái bất chấp bảng phải có khớp hay không. Ta cần LEFT JOIN để giải quyết các yêu cầu tìm sách chưa từng được mượn hoặc độc giả chưa có phiếu mượn (truy vấn mà bảng bên phải trả về NULL).
+SQL03: 
+- Transaction đảm bảo nguyên lý "Tất cả cùng thành công, hoặc hủy bỏ toàn bộ". Nếu giảm số lượng sách thành công nhưng bước tạo phiếu thất bại, nếu không có Transaction, dữ liệu kho sẽ bị lệch (mất sách). Có Transaction, hệ thống sẽ tự động Rollback (hủy thao tác giảm sách) để bảo vệ dữ liệu.
+SQL-04:Rủi ro xảy ra là "Race condition" (cạnh tranh tranh chấp). Hai luồng yêu cầu mượn cuốn sách cuối cùng cùng lúc, cùng lấy ra được available_copies = 1, cùng thỏa mãn kiểm tra logic và ghi đè UPDATE trừ số lượng, dẫn đến kho bị âm sách
