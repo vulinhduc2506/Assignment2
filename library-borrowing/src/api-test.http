@@ -1,0 +1,58 @@
+### 1. [Thành công] Tạo một cuốn sách mới (Trạng thái 201)
+POST http://localhost:8080/books
+Content-Type: application/json
+
+{
+  "code": "B01",
+  "title": "Clean Code",
+  "totalCopies": 2
+}
+
+### 2. [Lỗi 400] Tạo sách vi phạm Validation (Bỏ trống tiêu đề)
+POST http://localhost:8080/books
+Content-Type: application/json
+
+{
+  "code": "B02",
+  "title": "",
+  "totalCopies": 0
+}
+
+### 3. [Thành công] Lấy danh sách sách (Trạng thái 200)
+GET http://localhost:8080/books
+
+### 4. [Thành công] Mượn sách lần 1 (Trạng thái 201)
+POST http://localhost:8080/borrows
+Content-Type: application/json
+
+{
+  "readerCode": "R01",
+  "bookCode": "B01"
+}
+
+### 5. [Thành công] Mượn sách lần 2 (Trạng thái 201) - Sách B01 hết hàng
+POST http://localhost:8080/borrows
+Content-Type: application/json
+
+{
+  "readerCode": "R02",
+  "bookCode": "B01"
+}
+
+### 6. [Lỗi 409] Cố tình mượn sách khi đã hết (Xung đột nghiệp vụ)
+POST http://localhost:8080/borrows
+Content-Type: application/json
+
+{
+  "readerCode": "R01",
+  "bookCode": "B01"
+}
+
+### 7. [Thành công] Trả sách cho phiếu mượn ID 1 (Trạng thái 200)
+POST http://localhost:8080/borrows/1/return
+
+### 8. [Lỗi 409] Cố tình trả một phiếu mượn hai lần
+POST http://localhost:8080/borrows/1/return
+
+### 9. [Thành công] Xem chi tiết phiếu mượn ID 1
+GET http://localhost:8080/borrows/1

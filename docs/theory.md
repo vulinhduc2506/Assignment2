@@ -7,10 +7,15 @@ JC-01:
 - Encapsulation: tính đóng gói là việc che giấu dữ liệu trong class bằng từ khóa private, chỉ 
 có thể truy cập bằng các phương thức getter/setter
 
+JC-02:
+- Không cho bên ngoài gán availableCopies thành số âm vì số lượng sách vật lý 
+không thể nhỏ hơn 0. Việc đóng gói bằng private giúp kiểm soát giá trị gán vào luôn hợp lệ.
+
 JC-03:
 - ArrayList: Lưu các phần tử theo thứ tự thêm vào, cho phép các phần tử trùng lặp, cho phép truy cập các phần tử qua index
 - HashMap: Lưu theo cặp key-value, khóa key không trùng lặp
-
+- Khi tìm book sử dụng HashMap hợp hơn vì khi gán code của sách vào key trong Map thì khi 
+tìm sách sẽ lấy trực tiếp theo key = code thay vì duyệt lần lượt theo index
 JC-04:
 - Khi so sánh String, "==" chỉ để so sánh địa chỉ bộ nhớ của biến, trong khi equals() được dùng để so sánh giá trị nội dung thực tế của chuỗi String.
 
@@ -65,5 +70,7 @@ SQL-02:
 - INNER JOIN chỉ trả về bản ghi nếu cả 2 bảng đều có dữ liệu khớp nhau. 
 - LEFT JOIN trả về toàn bộ dữ liệu ở bảng trái bất chấp bảng phải có khớp hay không. Ta cần LEFT JOIN để giải quyết các yêu cầu tìm sách chưa từng được mượn hoặc độc giả chưa có phiếu mượn (truy vấn mà bảng bên phải trả về NULL).
 SQL03: 
-- Transaction đảm bảo nguyên lý "Tất cả cùng thành công, hoặc hủy bỏ toàn bộ". Nếu giảm số lượng sách thành công nhưng bước tạo phiếu thất bại, nếu không có Transaction, dữ liệu kho sẽ bị lệch (mất sách). Có Transaction, hệ thống sẽ tự động Rollback (hủy thao tác giảm sách) để bảo vệ dữ liệu.
+- Transaction đảm bảo nguyên lý "Tất cả cùng thành công, hoặc hủy bỏ toàn bộ". Nếu giảm số lượng sách thành công nhưng bước tạo phiếu thất bại, 
+nếu không có Transaction, dữ liệu kho sẽ bị lệch (mất sách mà không biết ai cầm). 
+Có Transaction, hệ thống sẽ tự động Rollback (hủy thao tác giảm sách) để bảo vệ dữ liệu.
 SQL-04:Rủi ro xảy ra là "Race condition" (cạnh tranh tranh chấp). Hai luồng yêu cầu mượn cuốn sách cuối cùng cùng lúc, cùng lấy ra được available_copies = 1, cùng thỏa mãn kiểm tra logic và ghi đè UPDATE trừ số lượng, dẫn đến kho bị âm sách
