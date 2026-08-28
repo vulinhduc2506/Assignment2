@@ -14,4 +14,15 @@ public class Book {
     private int totalCopies;
     private int availableCopies;
     private boolean active;
+
+    public Book(String code, String title, int totalCopies, int availableCopies, boolean active) {
+        this.code = code;
+        this.title = title;
+        this.totalCopies = totalCopies;
+        this.availableCopies = availableCopies;
+        this.active = active;
+    }
+
+    public Book() {
+    }
 }

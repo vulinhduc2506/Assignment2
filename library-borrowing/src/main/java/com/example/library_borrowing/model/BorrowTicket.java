@@ -15,4 +15,16 @@ public class BorrowTicket {
     private String status;
     private LocalDateTime borrowedAt;
     private LocalDateTime returnedAt;
+
+    public BorrowTicket(Long id, String readerCode, String bookCode, String status, LocalDateTime borrowedAt, LocalDateTime returnedAt) {
+        this.id = id;
+        this.readerCode = readerCode;
+        this.bookCode = bookCode;
+        this.status = status;
+        this.borrowedAt = borrowedAt;
+        this.returnedAt = returnedAt;
+    }
+
+    public BorrowTicket() {
+    }
 }

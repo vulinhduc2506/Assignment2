@@ -9,4 +9,12 @@ import lombok.Setter;
 public class Reader {
     private String code;
     private String name;
+
+    public Reader(String code, String name) {
+        this.code = code;
+        this.name = name;
+    }
+
+    public Reader() {
+    }
 }
