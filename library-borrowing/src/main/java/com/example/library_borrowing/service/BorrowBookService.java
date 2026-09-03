@@ -2,6 +2,7 @@ package com.example.library_borrowing.service;
 
 import com.example.library_borrowing.dto.request.BorrowBookRequest;
 import com.example.library_borrowing.dto.request.CreateBookRequest;
+import com.example.library_borrowing.dto.request.ReaderCreateRequest;
 import com.example.library_borrowing.dto.response.BookResponse;
 import com.example.library_borrowing.dto.response.BorrowTicketResponse;
 
@@ -11,7 +12,7 @@ public interface BorrowBookService {
     BookResponse createBook(CreateBookRequest request);
     List<BookResponse> searchBooks(String keyword);
     BookResponse getBook(String code);
-
+    void createReader(ReaderCreateRequest request);
     BorrowTicketResponse borrowBook(BorrowBookRequest request);
     BorrowTicketResponse returnBook(Long ticketId);
     BorrowTicketResponse getTicket(Long ticketId);

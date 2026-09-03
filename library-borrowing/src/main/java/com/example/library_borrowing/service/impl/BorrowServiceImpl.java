@@ -2,6 +2,7 @@ package com.example.library_borrowing.service.impl;
 
 import com.example.library_borrowing.dto.request.BorrowBookRequest;
 import com.example.library_borrowing.dto.request.CreateBookRequest;
+import com.example.library_borrowing.dto.request.ReaderCreateRequest;
 import com.example.library_borrowing.dto.response.BookResponse;
 import com.example.library_borrowing.dto.response.BorrowTicketResponse;
 import com.example.library_borrowing.exception.ConflictException;
@@ -23,7 +24,7 @@ public class BorrowServiceImpl implements BorrowBookService {
 
     private final Map<String, Book> books = new HashMap<>();
     private final Map<String, Reader> readers = new HashMap<>();
-    private final Map<Long, BorrowTicket> tickets = new HashMap<Long, BorrowTicket>();
+    private final Map<Long, BorrowTicket> tickets = new HashMap<>();
 
     @Override
     public BookResponse createBook(CreateBookRequest request) {
@@ -55,7 +56,15 @@ public class BorrowServiceImpl implements BorrowBookService {
         return new BookResponse(book);
     }
 
-    private Long ticketIdCount;
+    @Override
+    public void createReader(ReaderCreateRequest request) {
+        if (readers.containsKey(request.getCode())) {
+            throw new ConflictException("Mã độc giả đã tồn tại");
+        }
+        readers.put(request.getCode(), new Reader(request.getCode(), request.getName()));
+    }
+
+    private Long ticketIdCount = 0L;
     @Override
     public BorrowTicketResponse borrowBook(BorrowBookRequest request) {
         Reader reader = readers.get(request.getReaderCode());

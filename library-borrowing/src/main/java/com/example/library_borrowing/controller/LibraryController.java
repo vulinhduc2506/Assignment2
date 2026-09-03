@@ -2,6 +2,7 @@ package com.example.library_borrowing.controller;
 
 import com.example.library_borrowing.dto.request.BorrowBookRequest;
 import com.example.library_borrowing.dto.request.CreateBookRequest;
+import com.example.library_borrowing.dto.request.ReaderCreateRequest;
 import com.example.library_borrowing.dto.response.BookResponse;
 import com.example.library_borrowing.dto.response.BorrowTicketResponse;
 import com.example.library_borrowing.service.BorrowBookService;
@@ -42,7 +43,7 @@ public class LibraryController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PostMapping("/borrows")
+    @PostMapping("/return")
     public ResponseEntity<BorrowTicketResponse> returnBook(@PathVariable Long id) {
         BorrowTicketResponse response = borrowBookService.returnBook(id);
         return ResponseEntity.ok(response);
@@ -51,6 +52,12 @@ public class LibraryController {
     @GetMapping("/borrows/{id}")
     public ResponseEntity<BorrowTicketResponse> getTicketDetails(@PathVariable Long id) {
         return ResponseEntity.ok(borrowBookService.getTicket(id));
+    }
+
+    @PostMapping("/readers")
+    public ResponseEntity<String> createReader(@Valid @RequestBody ReaderCreateRequest request) {
+        borrowBookService.createReader(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body("Tạo độc giả thành công");
     }
 
 
