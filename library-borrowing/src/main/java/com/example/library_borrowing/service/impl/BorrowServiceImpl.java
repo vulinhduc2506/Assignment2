@@ -5,6 +5,7 @@ import com.example.library_borrowing.dto.request.CreateBookRequest;
 import com.example.library_borrowing.dto.request.ReaderCreateRequest;
 import com.example.library_borrowing.dto.response.BookResponse;
 import com.example.library_borrowing.dto.response.BorrowTicketResponse;
+import com.example.library_borrowing.enums.TicketStatus;
 import com.example.library_borrowing.exception.ConflictException;
 import com.example.library_borrowing.exception.NotFoundException;
 import com.example.library_borrowing.model.Book;
@@ -17,14 +18,17 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 @Service
 public class BorrowServiceImpl implements BorrowBookService {
 
-    private final Map<String, Book> books = new HashMap<>();
-    private final Map<String, Reader> readers = new HashMap<>();
-    private final Map<Long, BorrowTicket> tickets = new HashMap<>();
+    private final Map<String, Book> books = new ConcurrentHashMap<>();
+    private final Map<String, Reader> readers = new ConcurrentHashMap<>();
+    private final Map<Long, BorrowTicket> tickets = new ConcurrentHashMap<>();
+    private final AtomicLong ticketIdCounter = new AtomicLong(1);
 
     @Override
     public BookResponse createBook(CreateBookRequest request) {
@@ -64,7 +68,6 @@ public class BorrowServiceImpl implements BorrowBookService {
         readers.put(request.getCode(), new Reader(request.getCode(), request.getName()));
     }
 
-    private Long ticketIdCount = 0L;
     @Override
     public BorrowTicketResponse borrowBook(BorrowBookRequest request) {
         Reader reader = readers.get(request.getReaderCode());
@@ -74,21 +77,23 @@ public class BorrowServiceImpl implements BorrowBookService {
         if (book == null) throw new NotFoundException("sach ko ton tai");
 
         if (!book.isActive()) throw new ConflictException("sach ko kha dung");
-        if (book.getAvailableCopies() <= 0) throw new ConflictException("sach da muon het");
+        synchronized (book){
+            if (book.getAvailableCopies() <= 0) throw new ConflictException("sach da muon het");
 
-        book.setAvailableCopies(book.getAvailableCopies() - 1);
+            BorrowTicket ticket = new BorrowTicket(
+                    ticketIdCounter.getAndIncrement(),
+                    reader.getCode(),
+                    book.getCode(),
+                    TicketStatus.BORROWED,
+                    LocalDateTime.now(),
+                    null
+            );
 
-        BorrowTicket ticket = new BorrowTicket(
-                ticketIdCount++,
-                reader.getCode(),
-                book.getCode(),
-                "BORROWED",
-                LocalDateTime.now(),
-                null
-        );
-        tickets.put(ticket.getId(), ticket);
-        return new BorrowTicketResponse(ticket);
+            tickets.put(ticket.getId(), ticket);
+            book.setAvailableCopies(book.getAvailableCopies() - 1);
 
+            return new BorrowTicketResponse(ticket);
+        }
     }
 
     @Override
@@ -96,13 +101,13 @@ public class BorrowServiceImpl implements BorrowBookService {
         BorrowTicket ticket = tickets.get(ticketId);
         if (ticket == null) throw new NotFoundException("Khong tim thay phieu muon");
 
-        if ("RETURNED".equals(ticket.getStatus())) {
+        if (ticket.getStatus() == TicketStatus.RETURNED) {
             throw new ConflictException("Phieu nay da duoc tra");
         }
 
         Book book = books.get(ticket.getBookCode());
 
-        ticket.setStatus("RETURNED");
+        ticket.setStatus(TicketStatus.RETURNED);
         ticket.setReturnedAt(LocalDateTime.now());
         book.setAvailableCopies(book.getAvailableCopies() + 1);
 

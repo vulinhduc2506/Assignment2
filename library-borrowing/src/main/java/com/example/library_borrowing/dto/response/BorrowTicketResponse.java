@@ -1,5 +1,6 @@
 package com.example.library_borrowing.dto.response;
 
+import com.example.library_borrowing.enums.TicketStatus;
 import com.example.library_borrowing.model.BorrowTicket;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,7 +13,7 @@ public class BorrowTicketResponse {
     private Long id;
     private String readerCode;
     private String bookCode;
-    private String status;
+    private TicketStatus status;
     private LocalDateTime borrowedAt;
     private LocalDateTime returnedAt;
 
