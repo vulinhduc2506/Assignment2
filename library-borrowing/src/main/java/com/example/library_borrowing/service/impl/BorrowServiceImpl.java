@@ -32,20 +32,18 @@ public class BorrowServiceImpl implements BorrowBookService {
 
     @Override
     public BookResponse createBook(CreateBookRequest request) {
-        // containsKey() rồi put() là hai thao tác tách rời. ConcurrentHashMap chỉ bảo đảm
-        // từng thao tác thread-safe, không làm cả chuỗi check-then-act trở thành atomic. Hai request cùng code vẫn
-        // có thể cùng vượt qua kiểm tra và request sau ghi đè request trước. Hãy dùng putIfAbsent/computeIfAbsent
-        // và dựa vào giá trị trả về để quyết định ném ConflictException; viết test hai luồng tạo cùng một code.
-        if (books.containsKey(request.getCode())){
-            throw new ConflictException("da ton tai ma sach nay");
-        }
+        // Đã dùng dùng putIfAbsent() – hàm này gộp việc kiểm tra và lưu dữ liệu thành một thao tác nguyên tử
+        // (atomic) duy nhất. Nếu Key đã tồn tại, nó sẽ trả về đối tượng cũ (khác null) và không ghi đè.
         Book book = new Book();
         book.setCode(request.getCode());
         book.setTitle(request.getTitle());
         book.setTotalCopies(request.getTotalCopies());
         book.setAvailableCopies(request.getTotalCopies());
         book.setActive(true);
-        books.put(book.getCode(), book);
+
+        if (books.putIfAbsent(book.getCode(), book) != null) {
+            throw new ConflictException("Da ton tai ma sach nay");
+        }
         return new BookResponse(book);
     }
 
@@ -68,10 +66,12 @@ public class BorrowServiceImpl implements BorrowBookService {
     public void createReader(ReaderCreateRequest request) {
         // Lỗi check-then-act tương tự createBook(): containsKey() + put() không atomic.
         // Hãy sửa bằng API atomic của ConcurrentHashMap và chứng minh bằng test concurrent duplicate readerCode.
-        if (readers.containsKey(request.getCode())) {
-            throw new ConflictException("Mã độc giả đã tồn tại");
+
+        Reader newReader = new Reader(request.getCode(), request.getName());
+        if (readers.putIfAbsent(request.getCode(), newReader) != null) {
+            throw new ConflictException("Da ton tai ma nguoi doc nay");
         }
-        readers.put(request.getCode(), new Reader(request.getCode(), request.getName()));
+
     }
 
     @Override
@@ -107,21 +107,27 @@ public class BorrowServiceImpl implements BorrowBookService {
         BorrowTicket ticket = tickets.get(ticketId);
         if (ticket == null) throw new NotFoundException("Khong tim thay phieu muon");
 
-        // Toàn bộ chuỗi kiểm tra BORROWED -> đổi RETURNED -> tăng availableCopies chưa được
-        // đồng bộ. Hai request trả cùng ticket có thể cùng thấy BORROWED và cùng tăng tồn kho hai lần. ConcurrentHashMap
-        // không bảo vệ state bên trong BorrowTicket/Book. Hãy chọn một lock có ownership rõ ràng, khóa toàn bộ transition
-        // và giải thích cách tránh deadlock; sau đó viết test dùng CountDownLatch cho hai request return đồng thời.
-        if (ticket.getStatus() == TicketStatus.RETURNED) {
-            throw new ConflictException("Phieu nay da duoc tra");
+        //Deadlock chỉ xảy ra nếu luồng A giữ khóa X chờ khóa Y
+        //và luồng B giữ khóa Y đòi khóa X
+        //Hàm borrowBook khóa book
+        //Hàm returnBook phải khóa ticket trước, sau đó mới khóa book
+        synchronized (ticket) {
+            if (ticket.getStatus() == TicketStatus.RETURNED) {
+                throw new ConflictException("Phieu nay da duoc tra");
+            }
+
+            ticket.setStatus(TicketStatus.RETURNED);
+            ticket.setReturnedAt(LocalDateTime.now());
+
+            Book book = books.get(ticket.getBookCode());
+            //Khoa sach cong don ton kho
+            synchronized (book) {
+                book.setAvailableCopies(book.getAvailableCopies() + 1);
+            }
+
+            return new BorrowTicketResponse(ticket);
         }
 
-        Book book = books.get(ticket.getBookCode());
-
-        ticket.setStatus(TicketStatus.RETURNED);
-        ticket.setReturnedAt(LocalDateTime.now());
-        book.setAvailableCopies(book.getAvailableCopies() + 1);
-
-        return new BorrowTicketResponse(ticket);
     }
 
 

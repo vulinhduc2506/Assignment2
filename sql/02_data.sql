@@ -21,9 +21,8 @@ UPDATE books SET available_copies = available_copies - 1 WHERE id = 2;
 INSERT INTO borrow_tickets (reader_id, book_id, status) VALUES (2, 3, 'BORROWED');
 UPDATE books SET available_copies = available_copies - 1 WHERE id = 3;
 
--- Phiếu RETURNED nhưng returned_at lại NULL nên dữ liệu mẫu vi phạm ý nghĩa trạng thái.
--- Bổ sung returned_at và giải thích available_copies của B04 biểu diễn trạng thái hiện tại sau khi sách đã trả.
-INSERT INTO borrow_tickets (reader_id, book_id, status) VALUES (2, 4, 'RETURNED');
+-- đã thêm trường returned_at
+INSERT INTO borrow_tickets (reader_id, book_id, status, returned_at) VALUES (2, 4, 'RETURNED', CURRENT_TIMESTAMP);
 -- Sách trả lại không cần trừ available_copies
 
 INSERT INTO borrow_tickets (reader_id, book_id, status) VALUES (1, 3, 'BORROWED');
