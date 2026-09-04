@@ -43,6 +43,9 @@ public class LibraryController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    // Mapping này không có biến {id} nhưng method lại nhận @PathVariable Long id.
+    // Request trong api-test.http đang gọi POST /borrows/{id}/return nên endpoint hiện tại không khớp và id
+    // không thể được resolve. Yêu cầu sửa mapping cho thống nhất với API contract và tự viết test MockMvc cho route này.
     @PostMapping("/return")
     public ResponseEntity<BorrowTicketResponse> returnBook(@PathVariable Long id) {
         BorrowTicketResponse response = borrowBookService.returnBook(id);

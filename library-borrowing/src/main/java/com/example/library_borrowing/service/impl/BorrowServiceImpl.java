@@ -32,6 +32,10 @@ public class BorrowServiceImpl implements BorrowBookService {
 
     @Override
     public BookResponse createBook(CreateBookRequest request) {
+        // containsKey() rồi put() là hai thao tác tách rời. ConcurrentHashMap chỉ bảo đảm
+        // từng thao tác thread-safe, không làm cả chuỗi check-then-act trở thành atomic. Hai request cùng code vẫn
+        // có thể cùng vượt qua kiểm tra và request sau ghi đè request trước. Hãy dùng putIfAbsent/computeIfAbsent
+        // và dựa vào giá trị trả về để quyết định ném ConflictException; viết test hai luồng tạo cùng một code.
         if (books.containsKey(request.getCode())){
             throw new ConflictException("da ton tai ma sach nay");
         }
@@ -62,6 +66,8 @@ public class BorrowServiceImpl implements BorrowBookService {
 
     @Override
     public void createReader(ReaderCreateRequest request) {
+        // Lỗi check-then-act tương tự createBook(): containsKey() + put() không atomic.
+        // Hãy sửa bằng API atomic của ConcurrentHashMap và chứng minh bằng test concurrent duplicate readerCode.
         if (readers.containsKey(request.getCode())) {
             throw new ConflictException("Mã độc giả đã tồn tại");
         }
@@ -101,6 +107,10 @@ public class BorrowServiceImpl implements BorrowBookService {
         BorrowTicket ticket = tickets.get(ticketId);
         if (ticket == null) throw new NotFoundException("Khong tim thay phieu muon");
 
+        // Toàn bộ chuỗi kiểm tra BORROWED -> đổi RETURNED -> tăng availableCopies chưa được
+        // đồng bộ. Hai request trả cùng ticket có thể cùng thấy BORROWED và cùng tăng tồn kho hai lần. ConcurrentHashMap
+        // không bảo vệ state bên trong BorrowTicket/Book. Hãy chọn một lock có ownership rõ ràng, khóa toàn bộ transition
+        // và giải thích cách tránh deadlock; sau đó viết test dùng CountDownLatch cho hai request return đồng thời.
         if (ticket.getStatus() == TicketStatus.RETURNED) {
             throw new ConflictException("Phieu nay da duoc tra");
         }

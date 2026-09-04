@@ -49,6 +49,8 @@ Content-Type: application/json
 }
 
 ### 7. [Thành công] Trả sách cho phiếu mượn ID 1 (Trạng thái 200)
+# URL này đang mô tả contract hợp lý nhưng không trùng @PostMapping("/return") trong Controller.
+# Sau khi thống nhất route, chạy request thật và thêm automated test; file .http không thay thế unit/integration test.
 POST http://localhost:8080/borrows/1/return
 
 ### 8. [Lỗi 409] Cố tình trả một phiếu mượn hai lần
